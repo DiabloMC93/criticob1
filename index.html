@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Enfermería UCI</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-dim: #b0b0b0;
+            --accent: #00e5ff;
+            --success: #4caf50;
+            --error: #f44336;
+            --border: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app {
+            width: 90%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .counters {
+            display: flex;
+            gap: 15px;
+        }
+
+        .counter {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .aciertos { background: rgba(76, 175, 80, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .fallos { background: rgba(244, 67, 54, 0.2); color: var(--error); border: 1px solid var(--error); }
+
+        .progress-text {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            background: #252525;
+            border: 2px solid var(--border);
+            color: var(--text-main);
+            padding: 14px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .option:hover:not(:disabled) {
+            border-color: var(--accent);
+            background: #2a2a2a;
+        }
+
+        .option.correct {
+            background: var(--success) !important;
+            border-color: var(--success);
+            color: white;
+        }
+
+        .option.wrong {
+            background: var(--error) !important;
+            border-color: var(--error);
+            color: white;
+        }
+
+        .option:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-next, .btn-restart {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        .btn-next:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .btn-next:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .results {
+            text-align: center;
+        }
+
+        .results h1 { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- El contenido se genera dinámicamente con JS -->
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "¿CADA CUANTO SE REALIZA EL CUIDADO DEL CATÉTER PERIFÉRICO?",
+            options: ["0-48 horas", "12-48 horas", "0-72 horas", "24-48 horas"],
+            correct: 3 // d
+        },
+        {
+            q: "EL GRADO II DE LA PIA CORRESPONDE CON:",
+            options: [
+                "12-18 MMHG/ OLIGURIA / RESUCITACIÓN HIPOVOLÉMICA",
+                "12-18 MMHG/ ANURIA/ RESUCITACIÓN HIPERVOLÉMICA",
+                "12-18 MMHG/ ANURIA / RESUCITACIÓN HIPOVOLÉMICA",
+                "12-18 MMHG/ OLIGURIA / RESUCITACIÓN HIPERVOLÉMICA"
+            ],
+            correct: 3 // d
+        },
+        {
+            q: "¿CÓMO SE DEBE ACTUAR CUANDO LA SATURACIÓN DE O2 ES 95-90%?",
+            options: [
+                "remitir al hospital aunque mejoran con maniobras iniciales, por ser más incierta su respuesta al tratamiento",
+                "valorar intubación y ventilación mecánica.",
+                "enfermo grave. hipoxia severa. oxigenoterapia +tratamiento y traslado al hospital.",
+                "tratamiento inmediato y monitorización",
+                "no se actúa"
+            ],
+            correct: 0 // a
+        },
+        {
+            q: "¿CUAL NO ESTÁ DENTRO DEL EQUIPO DE LA UCI?",
+            options: ["enfermera", "técnico de rx", "celador", "ninguno"],
+            correct: 3 // d
+        },
+        {
+            q: "¿CUAL NO ES UNA INTERFERENCIA EN LA MONITORIZACIÓN NO INVASIVA EN LA SATURACIÓN DE O2?",
+            options: ["vasoconstricción periférica", "HIPOTERMIAS", "INTOXICACION CO", "anemia severas ( hemoglobina <15 mg/dl)"],
+            correct: 3 // d
+        },
+        {
+            q: "¿DE QUE ESTÁ FORMADO EL EQUIPO DE MONITORIZACIÓN INVASIVA?",
+            options: ["catéter y monitor", "transductor y monitor", "catéter, transductor y monitor", "ninguna"],
+            correct: 2 // c
+        },
+        {
+            q: "EL GRADO IV DE LA PIA CORRESPONDE CON:",
+            options: [
+                "<25MMHG / ANURIA DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN Y EXPLORACIÓN",
+                ">25 MMHG / ANURIA DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN Y EXPLORACIÓN",
+                ">25 MMHG / OLIGURIA DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN Y EXPLORACIÓN",
+                ">25 MMHG / ANURIA DESCENSO DE GC, PRESIONES AÉREAS DISMINUIDA/ DESCOMPRESIÓN Y EXPLORACIÓN"
+            ],
+            correct: 1 // b
+        },
+        {
+            q: "¿CADA CUANTO SE REALIZA EL CUIDADO DEL CATÉTER CENTRAL?",
+            options: ["0-48 horas", "12-48 horas", "0-72 horas", "24-48 horas"],
+            correct: 3 // d
+        },
+        {
+            q: "¿CUAL ES EL OBJETIVO DE LA CAPNOGRAFÍA?",
+            options: [
+                "medir de forma continua la presión parcial de CO2 espirado cómo medida indirecta del co2 en sangre",
+                "medir de forma incontinua la presión parcial de CO2 espirado cómo medida indirecta del co2 en sangre",
+                "medir de forma continua la presión parcial de CO2 espirado cómo medida directa del co2 en sangre",
+                "medir de forma continua la presión total de CO2 espirado cómo medida indirecta del co2 en sangre"
+            ],
+            correct: 0 // a
+        },
+        {
+            q: "EN LA MONITORIZACIÓN NO INVASIVA EL TA CUANDO HAY DROGAS VASOACTIVAS SE TOMA CADA?",
+            options: ["15 minutos", "25 minutos", "10 minutos", "5 minutos"],
+            correct: 3 // d
+        },
+        {
+            q: "¿QUE SE MIDE EN LA MONITORIZACIÓN CONTINUA EN LA UCI?",
+            options: [
+                "ECG, Ta no invasiva, temperatura y pulsioximetría",
+                "ECG, Ta invasiva, temperatura y pulsioximetría",
+                "ECG, Ta no invasiva y pulsioximetría",
+                "ECG, Ta invasiva, dolor y pulsioximetría"
+            ],
+            correct: 0 // a
+        },
+        {
+            q: "¿CUAL FORMA PARTE DE LA MONITORIZACIÓN INVASIVA?",
+            options: ["ecg", "ta", "etCo2", "pa"],
+            correct: 3 // d
+        },
+        {
+            q: "¿CÓMO SE DEBE ACTUAR CUANDO LA SATURACIÓN DE O2 ES <90%?",
+            options: [
+                "remitir al hospital aunque mejoran con maniobras iniciales",
+                "valorar intubación y ventilación mecánica.",
+                "enfermo grave. hipoxia severa. oxigenoterapia +tratamiento y traslado al hospital.",
+                "tratamiento inmediato y monitorización",
+                "no se actúa"
+            ],
+            correct: 2 // c
+        },
+        {
+            q: "¿QUÉ PRESIONES NO SE MIDE EN LA MONITORIZACIÓN INVASIVA?",
+            options: ["presión arterial pulmonar", "presión capilar pulmonar", "gasto cardiaco", "presión craneal"],
+            correct: 2 // c
+        },
+        {
+            q: "EN LOS REGISTRO DE ENFERMERÍA DE LA UCI, EN LOS APARTADO HAY QUE COMPLETAR…?",
+            options: [
+                "datos identificativos, ,entrada y salida de sustancia.",
+                "datos identificativos, constantes vitales, ,entrada y salida de sustancia.",
+                "datos identificativos, constantes vitales, y salida de sustancia.",
+                "datos identificativos, constantes vitales, ,entrada de sustancia."
+            ],
+            correct: 1 // b
+        },
+        {
+            q: "¿CADA CUANTO SE REALIZA UNA HIGIENE NASAL Y ORAL?",
+            options: ["cada 5 horas", "cada 10 horas", "cada 12 horas", "cada 8 horas"],
+            correct: 3 // d
+        },
+        {
+            q: "¿CADA CUANTO SE REALIZA EL CUIDADO DE LA SONDA NASOGÁSTRICA?",
+            options: [
+                "cuidados, cambios y fijación cada 12 horas",
+                "cuidados, cambios y fijación cada 24 horas",
+                "cuidados, cambios y fijación cada 48 horas",
+                "no se realiza cuidados"
+            ],
+            correct: 1 // b
+        },
+        {
+            q: "¿QUÉ FUNCIONES REEMPLAZA LA UNIDAD DE CUIDADOS INTENSIVOS?",
+            options: [
+                "respiracion circulacion renal termorregulación y metabolismo",
+                "respiración renal termorregulación y metabolismo",
+                "respiracion circulacion termorregulación y metabolismo",
+                "respiracion circulacion renal y metabolismo"
+            ],
+            correct: 0 // a
+        },
+        {
+            q: "¿CUAL NO FORMA PARTE DE LA MONITORIZACIÓN INVASIVA?",
+            options: ["pa", "pvc", "pia", "ta"],
+            correct: 3 // d
+        },
+        {
+            q: "¿CÓMO SE DEBE ACTUAR CUANDO LA SATURACIÓN DE O2 ES >95%?",
+            options: [
+                "remitir al hospital aunque mejoran con maniobras iniciales",
+                "valorar intubación y ventilación mecánica.",
+                "enfermo grave. hipoxia severa.",
+                "tratamiento inmediato y monitorización",
+                "no se actúa"
+            ],
+            correct: 4 // e
+        },
+        {
+            q: "¿CÓMO TIENE QUE ESTAR EL PACIENTE PARA LA MONITORIZACIÓN NO INVASIVA DE TA?",
+            options: ["decúbito supino", "posición lateral", "fowler", "ninguna"],
+            correct: 0 // a
+        },
+        {
+            q: "EL GRADO III DE LA PIA CORRESPONDE CON:",
+            options: [
+                "19-20 MMHG / ANURIA, DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN",
+                "19-25 MMHG / ANURIA, DESCENSO DE GC, PRESIONES AÉREAS DISMINUIDA/ DESCOMPRESIÓN",
+                "19-25 MMHG / ANURIA, DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN",
+                "19-25 MMHG / OLIGURIA, DESCENSO DE GC, PRESIONES AÉREAS ELEVADAS / DESCOMPRESIÓN"
+            ],
+            correct: 2 // c
+        }
+    ];
+
+    let currentQuestion = 0;
+    let aciertos = 0;
+    let fallos = 0;
+    let hasAnswered = false;
+
+    const app = document.getElementById('app');
+
+    function renderQuestion() {
+        if (currentQuestion >= questions.length) {
+            renderResults();
+            return;
+        }
+
+        hasAnswered = false;
+        const qData = questions[currentQuestion];
+        app.innerHTML = `
+            <div class="header">
+                <span class="progress-text">Pregunta ${currentQuestion + 1} de ${questions.length}</span>
+                <div class="counters">
+                    <span class="counter aciertos">Aciertos: ${aciertos}</span>
+                    <span class="counter fallos">Fallos: ${fallos}</span>
+                </div>
+            </div>
+            <h2>${qData.q}</h2>
+            <div class="options" id="options-box">
+                ${qData.options.map((opt, i) => `
+                    <button class="option" onclick="checkAnswer(${i})">${String.fromCharCode(97 + i)}. ${opt}</button>
+                `).join('')}
+            </div>
+            <div class="controls">
+                <button id="next-btn" class="btn-next" onclick="nextQuestion()" disabled>Siguiente</button>
+            </div>
+        `;
+    }
+
+    window.checkAnswer = function(index) {
+        if (hasAnswered) return;
+        
+        hasAnswered = true;
+        const qData = questions[currentQuestion];
+        const buttons = document.querySelectorAll('.option');
+        const nextBtn = document.getElementById('next-btn');
+        
+        // Bloquear opciones
+        buttons.forEach(btn => btn.disabled = true);
+
+        if (index === qData.correct) {
+            buttons[index].classList.add('correct');
+            aciertos++;
+        } else {
+            buttons[index].classList.add('wrong');
+            buttons[qData.correct].classList.add('correct');
+            fallos++;
+        }
+
+        // Habilitar botón de siguiente
+        nextBtn.disabled = false;
+        
+        // Actualizar contadores visualmente de inmediato
+        document.querySelector('.aciertos').innerText = `Aciertos: ${aciertos}`;
+        document.querySelector('.fallos').innerText = `Fallos: ${fallos}`;
+    }
+
+    window.nextQuestion = function() {
+        currentQuestion++;
+        renderQuestion();
+    }
+
+    function renderResults() {
+        const percent = Math.round((aciertos / questions.length) * 100);
+        app.innerHTML = `
+            <div class="results">
+                <h1>Test Completado</h1>
+                <p style="font-size: 1.2rem; margin: 20px 0;">Tu puntuación final: <strong>${percent}%</strong></p>
+                <div style="display: flex; justify-content: center; gap: 30px; margin: 30px 0;">
+                    <div><h3 style="color: var(--success); margin: 0; font-size: 2rem;">${aciertos}</h3><small>Aciertos</small></div>
+                    <div><h3 style="color: var(--error); margin: 0; font-size: 2rem;">${fallos}</h3><small>Fallos</small></div>
+                </div>
+                <button class="btn-restart" onclick="restart()">Reiniciar Test</button>
+            </div>
+        `;
+    }
+
+    window.restart = function() {
+        currentQuestion = 0;
+        aciertos = 0;
+        fallos = 0;
+        renderQuestion();
+    }
+
+    // Iniciar
+    renderQuestion();
+
+</script>
+
+</body>
+</html>
